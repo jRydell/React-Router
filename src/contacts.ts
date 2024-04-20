@@ -42,7 +42,7 @@ export async function updateContact(
   await fakeNetwork();
   let contacts = (await localforage.getItem<Contact[]>("contacts")) ?? [];
   let contact = contacts.find((contact) => contact.id === id);
-  if (!contact) throw new Error("No contact found for", id);
+  if (!contact) throw new Error("No contact found for " + id);
   Object.assign(contact, updates);
   await set(contacts);
   return contact;
@@ -67,16 +67,19 @@ function set(contacts: Contact[]): Promise<void> {
 let fakeCache: Record<string, boolean> = {};
 
 async function fakeNetwork(key?: string): Promise<void> {
-  if (!key) {
-    fakeCache = {};
-  }
+  return new Promise<void>((resolve) => {
+    if (key !== undefined) {
+      if (fakeCache[key]) {
+        resolve();
+        return;
+      }
+      fakeCache[key] = true;
+    } else {
+      fakeCache = {};
+    }
 
-  if (fakeCache[key]) {
-    return;
-  }
-
-  fakeCache[key] = true;
-  return new Promise((res) => {
-    setTimeout(res, Math.random() * 800);
+    setTimeout(() => {
+      resolve(); // Resolve the promise after the timeout
+    }, Math.random() * 800);
   });
 }
